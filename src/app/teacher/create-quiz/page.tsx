@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -215,12 +216,53 @@ const FileUpload: React.FC<{
   onFileChange: (file: File | null) => void;
 }> = ({ onFileChange }) => {
   const [fileName, setFileName] = useState<string | null>(null);
+  const [chunks, setChunks] = useState<{ range: string; content: string }[]>([]); // State to hold the PDF chunks
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to hold error messages
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+
+    // Reset error message
+    setErrorMessage(null);
     onFileChange(file);
     setFileName(file ? file.name : null);
+
+    if (!file) {
+      setErrorMessage('No file selected.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post('/api/upload/file-upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Check if the response data is as expected
+      if (Array.isArray(response.data)) {
+        // Store the chunks returned by the API in the state
+        setChunks(response.data);
+        console.log('PDF Content Chunks:', response.data);
+      } else {
+        throw new Error('Unexpected response format.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle specific Axios errors
+        setErrorMessage(error.response?.data?.error || 'Error uploading file.');
+      } else {
+        // Handle other errors
+        setErrorMessage('Error uploading file.');
+      }
+      console.error('Error uploading file:', error);
+    }
   };
+
+  
 
   return (
     <motion.div
@@ -270,6 +312,7 @@ export default function QuizUploadPage() {
   const [difficulty, setDifficulty] = useState("");
   const [quizLength, setQuizLength] = useState(10);
   const [file, setFile] = useState<File | null>(null);
+  // const [chunks, setChunks] = useState<{ range: string; content: string }[]>([]); // State to hold the PDF chunks
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
