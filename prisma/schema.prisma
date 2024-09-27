@@ -1,0 +1,52 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model Teacher {
+  id       String    @id @default(cuid())
+  kindeId  String    @unique
+  name     String
+  email    String    @unique
+  students Student[]
+  quizzes  Quiz[]
+}
+
+model Student {
+  id       String    @id @default(cuid())
+  kindeId  String    @unique
+  name     String
+  email    String    @unique
+  teachers Teacher[]
+}
+
+model Quiz {
+  id        String     @id @default(cuid())
+  name      String
+  teacher   Teacher    @relation(fields: [teacherId], references: [id])
+  teacherId String
+  questions Question[]
+}
+
+model Question {
+  id      String   @id @default(cuid())
+  text    String
+  quiz    Quiz     @relation(fields: [quizId], references: [id])
+  quizId  String
+  options Option[]
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  text       String
+  isCorrect  Boolean
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+}
