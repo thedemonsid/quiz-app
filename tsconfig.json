@@ -21,6 +21,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/teacher/(teacher-dashboard)/page.jsx", "src/app/student/(student-dashboard)/page.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/teacher/(teacher-dashboard)/page.jsx", "src/app/student/(student-dashboard)/page.jsx", "src/app/teacher/create-quiz/page.tsx", "src/app/teacher/preview-quiz/page.tsx"],
   "exclude": ["node_modules"]
 }

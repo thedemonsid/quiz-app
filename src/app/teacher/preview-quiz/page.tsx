@@ -1,10 +1,6 @@
 "use client";
-
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
-import * as random from "maath/random/dist/maath-random.esm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -17,32 +13,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const MovingBackground: React.FC = () => {
-  const ref = useRef<THREE.Points>(null);
-  const sphere = random.inSphere(new Float32Array(5000), { radius: 1.2 });
-
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x -= delta / 10;
-      ref.current.rotation.y -= delta / 15;
-    }
-  });
-
-  return (
-    <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={2} frustumCulled={false}>
-        <PointMaterial
-          transparent
-          color="#8b5cf6"
-          size={0.005}
-          sizeAttenuation
-          depthWrite={false}
-        />
-      </Points>
-    </group>
-  );
-};
 
 interface LLMInputProps {
   onSuggest: (suggestion: string) => void;
@@ -195,12 +165,6 @@ const QuizPreview: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-600 text-white overflow-hidden">
-      <div className="fixed inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 1] }}>
-          <MovingBackground />
-        </Canvas>
-      </div>
-
       <div className="relative z-10 container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
