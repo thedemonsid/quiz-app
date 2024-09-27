@@ -212,20 +212,13 @@ const QuizLengthSelector: React.FC<{
   );
 };
 
-const FileUpload: React.FC<{
-  onFileChange: (file: File | null) => void;
-}> = ({ onFileChange }) => {
+const PdfUploader: React.FC = () => {
   const [fileName, setFileName] = useState<string | null>(null);
-  const [chunks, setChunks] = useState<{ range: string; content: string }[]>([]); // State to hold the PDF chunks
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to hold error messages
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-
-    // Reset error message
-    setErrorMessage(null);
-    onFileChange(file);
-    setFileName(file ? file.name : null);
 
     if (!file) {
       setErrorMessage('No file selected.');
@@ -233,79 +226,88 @@ const FileUpload: React.FC<{
     }
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('filepond', file); // Ensure the field name matches the multer configuration
 
     try {
-      const response = await axios.post('/api/upload/file-upload', formData, {
+      const response = await axios.post('http://localhost:5000/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Check if the response data is as expected
-      if (Array.isArray(response.data)) {
-        // Store the chunks returned by the API in the state
-        setChunks(response.data);
-        console.log('PDF Content Chunks:', response.data);
-      } else {
-        throw new Error('Unexpected response format.');
-      }
+      setExtractedText(response.data.text); // Store the extracted text
+      setFileName(file.name);
+      setErrorMessage(null); // Clear any previous error messages
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // Handle specific Axios errors
-        setErrorMessage(error.response?.data?.error || 'Error uploading file.');
-      } else {
-        // Handle other errors
-        setErrorMessage('Error uploading file.');
-      }
+      setErrorMessage('Error uploading file.');
       console.error('Error uploading file:', error);
     }
   };
 
-  
-
   return (
-    <motion.div
-      className="space-y-2"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
-    >
-      <Label htmlFor="file-upload" className="text-lg font-semibold">
-        Upload Additional Context (Optional)
-      </Label>
-      <div className="relative">
-        <Input
-          id="file-upload"
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-          accept=".pdf,.doc,.docx,.txt"
-        />
-        <Label
-          htmlFor="file-upload"
-          className="flex items-center justify-center px-4 py-2 bg-white bg-opacity-10 backdrop-blur-lg text-white rounded-md cursor-pointer hover:bg-opacity-20 transition-all duration-300"
-        >
-          <Upload className="mr-2" />
-          {fileName || "Choose file"}
-        </Label>
-      </div>
-      <AnimatePresence>
-        {fileName && (
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="text-sm text-indigo-200 mt-1"
-          >
-            File uploaded: {fileName}
-          </motion.p>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    <div>
+      <input type="file" accept=".pdf" onChange={handleFileChange} />
+      {fileName && <p>Uploaded file: {fileName}</p>}
+      {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+      {extractedText && (
+        <div>
+          <h3>Extracted Text:</h3>
+          <pre>{extractedText}</pre>
+        </div>
+      )}
+    </div>
   );
 };
 
+//  return (
+//   <motion.div
+//   className="space-y-2"
+//   initial={{ opacity: 0, y: 20 }}
+//   animate={{ opacity: 1, y: 0 }}
+//   transition={{ duration: 0.5, delay: 0.4 }}
+// >
+//   <Label htmlFor="file-upload" className="text-lg font-semibold">
+//     Upload Additional Context (Optional)
+//   </Label>
+//   <div className="relative">
+//     <Input
+//       id="file-upload"
+//       type="file"
+//       onChange={handleFileChange}
+//       className="hidden"
+//       accept=".pdf,.doc,.docx,.txt"
+//     />
+//     <Label
+//       htmlFor="file-upload"
+//       className="flex items-center justify-center px-4 py-2 bg-white bg-opacity-10 backdrop-blur-lg text-white rounded-md cursor-pointer hover:bg-opacity-20 transition-all duration-300"
+//     >
+//       <Upload className="mr-2" />
+//       {fileName || "Choose file"}
+//     </Label>
+//   </div>
+//   <AnimatePresence>
+//     {fileName && (
+//       <motion.p
+//         initial={{ opacity: 0, y: -10 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         exit={{ opacity: 0, y: -10 }}
+//         className="text-sm text-indigo-200 mt-1"
+//       >
+//         File uploaded: {fileName}
+//       </motion.p>
+//     )}
+//   </AnimatePresence>
+//   {extractedText && (
+//     <div>
+//       <h3 className="text-lg font-semibold">Extracted Text:</h3>
+//       <pre className="bg-gray-800 text-white p-2 rounded">
+//         {extractedText}
+//       </pre>
+//     </div>
+//   )}
+//   {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+// </motion.div>
+// );
 export default function QuizUploadPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiInteraction, setAiInteraction] = useState("");
@@ -354,7 +356,7 @@ export default function QuizUploadPage() {
           <AIInteraction value={aiInteraction} onChange={setAiInteraction} />
           <DifficultySelector value={difficulty} onChange={setDifficulty} />
           <QuizLengthSelector value={quizLength} onChange={setQuizLength} />
-          <FileUpload onFileChange={setFile} />
+          <PdfUploader onFileChange={setFile} />
 
           <motion.div
             whileHover={{ scale: 1.05 }}
