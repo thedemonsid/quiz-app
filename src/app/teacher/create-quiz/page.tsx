@@ -200,7 +200,7 @@ const QuizLengthSelector: React.FC<{
       <Slider
         id="quiz-length"
         min={5}
-        max={30}
+        max={20}
         step={5}
         value={[value]}
         onValueChange={(values: any) => onChange(values[0])}
