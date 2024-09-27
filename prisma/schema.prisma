@@ -30,9 +30,11 @@ model Student {
 model Quiz {
   id        String     @id @default(cuid())
   name      String
+  subject   String     @default("GK")
   teacher   Teacher    @relation(fields: [teacherId], references: [id])
   teacherId String
   questions Question[]
+  createdAt DateTime   @default(now())
 }
 
 model Question {
